@@ -5,8 +5,8 @@ const gameSocket = (io) => {
     console.log(`User connected: ${socket.id}`);
 
     // Handle player joining a game
-    socket.on("join_game", ({ gameId }) => {
-      console.log(`Player trying to join game: ${gameId}`);
+    socket.on("join_game", ({ gameId, player }) => {
+      console.log(`Player ${player} trying to join game: ${gameId}`);
 
       // Initialize the game if it doesn't exist
       if (!games[gameId]) {
@@ -20,63 +20,51 @@ const gameSocket = (io) => {
 
       const game = games[gameId];
 
-      console.log(`Current players in game ${gameId}:`, game.players);
+      // Check if the game is full or the player is already connected
+      if (game.players.length >= 2) {
+        socket.emit("error_message", "Game is full.");
+        return;
+      }
 
-      // Add the player to the game if not already added
-      if (game.players.length < 2 && !game.players.find((p) => p.id === socket.id)) {
-        const playerType = game.players.length === 0 ? "O" : "X";
-        game.players.push({ id: socket.id, player: playerType });
+      if (game.players.find((p) => p.id === socket.id)) {
+        socket.emit("error_message", "You are already in this game.");
+        return;
+      }
 
-        console.log(`Player ${playerType} joined game ${gameId}`);
-        console.log(`Game state after player joined:`, game);
+      // Add the player to the game
+      game.players.push({ id: socket.id, player });
+      socket.join(gameId);
+      console.log(`${player} joined game ${gameId}`);
 
-        // Notify player of their role
-        socket.emit("start_game", playerType);
-
-        // If both players are connected, start the game
-        if (game.players.length === 2) {
-          console.log(`Both players connected for game ${gameId}`);
-          game.players.forEach(({ id, player }) => {
-            io.to(id).emit("start_game", player);
-          });
-        }
-      } else {
-        socket.emit("error_message", "Game is full or you are already connected.");
+      // Notify all players if the game starts
+      if (game.players.length === 2) {
+        io.to(gameId).emit("start_game", game.turn);
       }
     });
 
     // Handle player moves
     socket.on("player_move", ({ gameId, move, player }) => {
       const game = games[gameId];
+
       if (!game) {
         socket.emit("error_message", "Game not found.");
         return;
       }
 
-      console.log(`Player ${player} making move in game ${gameId}:`, { move });
-
-      // Check if it's the player's turn
-      if (game.turn !== player) {
-        socket.emit("error_message", "Not your turn.");
-        return;
-      }
-
       // Validate the move
-      if (game.board[move] !== null) {
-        socket.emit("error_message", "Invalid move.");
+      if (game.board[move] !== null || game.turn !== player) {
+        socket.emit("error_message", "Invalid move or not your turn.");
         return;
       }
 
-      // Update the board and switch turns
+      // Update the game state
       game.board[move] = player;
       game.turn = player === "O" ? "X" : "O";
 
-      console.log(`Updated board for game ${gameId}:`, game.board);
+      console.log(`Game ${gameId} board:`, game.board);
 
       // Notify all players about the updated board
-      game.players.forEach(({ id }) => {
-        io.to(id).emit("update_game", { move, player });
-      });
+      io.to(gameId).emit("update_game", { move, player });
     });
 
     // Handle player disconnection
@@ -88,9 +76,6 @@ const gameSocket = (io) => {
         const game = games[gameId];
         game.players = game.players.filter((p) => p.id !== socket.id);
 
-        console.log(`Updated players for game ${gameId}:`, game.players);
-
-        // If no players are left in the game, delete it
         if (game.players.length === 0) {
           delete games[gameId];
           console.log(`Game ${gameId} has been deleted.`);
