@@ -6,6 +6,7 @@ const Home = () => {
   const navigate = useNavigate();
 
   const handleJoin = () => {
+    if (!gameId) return alert("Please enter a game ID!");
     navigate(`/game/${gameId}`);
   };
 
