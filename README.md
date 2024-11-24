@@ -15,6 +15,13 @@ This is a real-time, two-player Tic Tac Toe game built using React for the front
 
 ---
 
+## Screenshots
+
+![](screenshots/1.png)
+![](screenshots/2.png)
+
+---
+
 ## Tech Stack
 
 ### Frontend
@@ -80,7 +87,7 @@ Ensure you have the following installed:
 ## Folder Structure
 
 ```
-Two-Player-Tic-Tac-Toe/
+Two-Player-/
 ├── backend/
 │   ├── server.js           # Main backend logic
 │   ├── package.json        # Backend dependencies
@@ -118,7 +125,7 @@ Two-Player-Tic-Tac-Toe/
 ---
 
 ## Future Enhancements
-- 🏆 Add win/loss/draw detection and notifications.
+
 - 🔒 Add player authentication for secure gameplay.
 - 🌐 Deploy the application for online multiplayer.
 - 📱 Make the game responsive for mobile devices.
