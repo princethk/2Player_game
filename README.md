@@ -19,6 +19,8 @@ This is a real-time, two-player Tic Tac Toe game built using React for the front
 
 ![](screenshots/1.png)
 ![](screenshots/2.png)
+![](screenshots/3.png)
+![](screenshots/4.png)
 
 ---
 
